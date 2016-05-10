@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -61,10 +64,23 @@ const (
 	SEQUENCE      = "sequence"
 	PARTITION_KEY = "partition-key"
 	DATA          = "data"
+	GZIPPED_DATA  = "gzipped_data"
 )
 
 func outputRecord(record *kinesis.Record, format string) {
 	switch format {
+	case GZIPPED_DATA:
+		gr, err := gzip.NewReader(bytes.NewReader(record.Data))
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		b, err := ioutil.ReadAll(gr)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		outputData(b)
 	case DATA:
 		outputData(record.Data)
 	case PARTITION_KEY:
